@@ -7,6 +7,13 @@ interface TranscriptionWord {
 interface TranscriptionResponse {
   text: string;
   words: TranscriptionWord[];
+  // Add fallback properties from OpenAI's response
+  segments?: Array<{
+    start: number;
+    end: number;
+    text: string;
+    words: TranscriptionWord[];
+  }>;
 }
 
 export interface HighlightResult {
@@ -19,31 +26,77 @@ export function searchTranscription(
   transcription: TranscriptionResponse,
   searchTerm: string
 ): HighlightResult[] {
-  if (
-    !transcription ||
-    !searchTerm ||
-    !transcription.words ||
-    transcription.words.length === 0
-  ) {
+  console.log("Search Term:", searchTerm);
+
+  if (!transcription || !searchTerm) {
+    console.log("Early return: Missing transcription or search term");
     return [];
+  }
+
+  // Extract words from the response structure
+  let words: TranscriptionWord[] = [];
+
+  // Check for direct words array
+  if (transcription.words && transcription.words.length > 0) {
+    words = transcription.words;
+  }
+  // Check for nested words inside segments (Whisper API format)
+  else if (transcription.segments && transcription.segments.length > 0) {
+    // Collect words from all segments
+    transcription.segments.forEach((segment) => {
+      if (segment.words && segment.words.length > 0) {
+        words = words.concat(segment.words);
+      }
+    });
+  }
+
+  console.log("Words array length:", words.length);
+  if (words.length === 0) {
+    // Last resort: create fake word boundaries based on the full text
+    if (transcription.text) {
+      console.log("Creating words from full text");
+      const textWords = transcription.text.split(/\s+/);
+      const avgDuration = 0.5; // Estimate 0.5 seconds per word
+
+      words = textWords.map((word, index) => ({
+        word,
+        start: index * avgDuration,
+        end: (index + 1) * avgDuration,
+      }));
+    } else {
+      console.log("No words found in transcription");
+      return [];
+    }
   }
 
   const searchTermLower = searchTerm.toLowerCase();
   const matches: HighlightResult[] = [];
-  const { words } = transcription;
+
+  // Sample the first few words to debug format
+  if (words.length > 0) {
+    console.log("Sample words format:", JSON.stringify(words.slice(0, 3)));
+  }
 
   // Search for individual words
   if (!searchTermLower.includes(" ")) {
+    console.log("Searching for single word:", searchTermLower);
     for (let i = 0; i < words.length; i++) {
       const wordObj = words[i];
       const normalizedWord = wordObj.word
         .toLowerCase()
         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
 
+      if (i % 10 === 0) {
+        console.log(
+          `Word ${i}: Original = "${wordObj.word}", Normalized = "${normalizedWord}"`
+        );
+      }
+
       if (
         normalizedWord === searchTermLower ||
         normalizedWord.includes(searchTermLower)
       ) {
+        console.log("Match found:", wordObj.word, "at", wordObj.start);
         matches.push({
           text: wordObj.word,
           start: wordObj.start,
@@ -51,11 +104,14 @@ export function searchTranscription(
         });
       }
     }
+    console.log("Single word search results:", matches.length);
     return matches;
   }
 
   // Search for multi-word phrases
+  console.log("Searching for phrase:", searchTermLower);
   const searchWords = searchTermLower.split(" ");
+  console.log("Search words:", searchWords);
 
   for (let i = 0; i <= words.length - searchWords.length; i++) {
     let match = true;
@@ -75,6 +131,12 @@ export function searchTranscription(
         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
       const searchWord = searchWords[j];
 
+      if (i % 20 === 0 && j === 0) {
+        console.log(
+          `Checking phrase at index ${i}: "${currentWord}" includes "${searchWord}"?`
+        );
+      }
+
       if (!currentWord.includes(searchWord)) {
         match = false;
         break;
@@ -89,6 +151,7 @@ export function searchTranscription(
     }
 
     if (match) {
+      console.log("Phrase match found:", completePhrase, "at", startTime);
       matches.push({
         text: completePhrase,
         start: startTime,
@@ -97,6 +160,7 @@ export function searchTranscription(
     }
   }
 
+  console.log("Phrase search results:", matches.length);
   return matches;
 }
 
@@ -105,15 +169,23 @@ export function getContextAroundMatch(
   match: HighlightResult,
   contextWords: number = 5
 ): string {
-  if (
-    !transcription ||
-    !transcription.words ||
-    transcription.words.length === 0
-  ) {
+  // Extract words using the same logic as in searchTranscription
+  let words: TranscriptionWord[] = [];
+
+  if (transcription.words && transcription.words.length > 0) {
+    words = transcription.words;
+  } else if (transcription.segments && transcription.segments.length > 0) {
+    transcription.segments.forEach((segment) => {
+      if (segment.words && segment.words.length > 0) {
+        words = words.concat(segment.words);
+      }
+    });
+  }
+
+  if (words.length === 0) {
     return match.text;
   }
 
-  const { words } = transcription;
   let startWordIndex = -1;
 
   // Find the starting word index
