@@ -7,7 +7,6 @@ interface TranscriptionWord {
 interface TranscriptionResponse {
   text: string;
   words: TranscriptionWord[];
-  // Add fallback properties from OpenAI's response
   segments?: Array<{
     start: number;
     end: number;
