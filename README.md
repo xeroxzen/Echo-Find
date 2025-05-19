@@ -1,22 +1,34 @@
-# EchoFind
+# EchoFind 🎵
 
-EchoFind is a lightweight web application that allows users to upload an audio file and search for specific words or phrases within it. The app transcribes the audio, identifies where the searched terms appear, and highlights the exact timestamps, enabling users to jump directly to those moments in the playback.
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-Whisper-412991?style=for-the-badge&logo=openai)](https://openai.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-## Features
+<div align="center">
+  <img src="src/app/favicon.ico" alt="EchoFind Logo" width="200"/>
+  
+  <p><em>Find your words in audio, instantly.</em></p>
+</div>
 
-- Upload audio files (MP3, WAV, etc.)
-- Transcribe audio using OpenAI's Whisper model
-- Search for words or phrases within the transcription
-- View highlighted matches with timestamps
-- Jump directly to specific moments in the audio
-- Visual waveform display with highlighted regions
+## ✨ Features
 
-## Prerequisites
+- 🎧 Upload audio files (MP3, WAV, etc.)
+- 🎯 Transcribe audio using OpenAI's Whisper model
+- 🔍 Search for words or phrases within the transcription
+- ⏱️ View highlighted matches with timestamps
+- 🎯 Jump directly to specific moments in the audio
+- 📊 Visual waveform display with highlighted regions
+
+## 🚀 Getting Started
+
+### Prerequisites
 
 - Node.js 18+ and npm
 - An OpenAI API key (for transcription service)
 
-## Getting Started
+### Installation
 
 1. Clone the repository:
 
@@ -33,11 +45,11 @@ npm install
 
 3. Create a `.env.local` file in the root directory with your OpenAI API key:
 
-```
+```env
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-4. Run the development server:
+4. Start the development server:
 
 ```bash
 npm run dev
@@ -45,22 +57,48 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
-## Usage
+## 📖 Usage Guide
 
-1. Upload an audio file by dragging and dropping or clicking the upload area
-2. Wait for the transcription to complete, it takes 5 seconds
-3. Search for specific words or phrases using the search bar
-4. Click on any of the matched results to jump to that part of the audio
-5. View the complete transcription text below the search bar
+1. **Upload Audio**
 
-## Technologies Used
+   - Drag and drop your audio file
+   - Or click the upload area to select a file
 
-- Next.js 14
-- TypeScript
-- Tailwind CSS
-- OpenAI Whisper API for transcription
-- WaveSurfer.js for audio visualization
+2. **Transcription**
 
-## License
+   - Wait for the transcription to complete (typically 5 seconds)
+   - View the complete transcription text below the search bar
 
-MIT
+3. **Search & Navigate**
+   - Enter your search term in the search bar
+   - Click on matched results to jump to that timestamp
+   - Use the waveform visualization to navigate
+
+## 🛠️ Tech Stack
+
+- **Frontend Framework:** [Next.js 14](https://nextjs.org/)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Audio Processing:** [WaveSurfer.js](https://wavesurfer-js.org/)
+- **Transcription:** [OpenAI Whisper API](https://openai.com/research/whisper)
+
+## 🔐 Authentication
+
+To use EchoFind, you'll need to set up authentication with your OpenAI API key:
+
+1. Sign up for an OpenAI account at [https://platform.openai.com](https://platform.openai.com)
+2. Generate an API key from your dashboard
+3. Add the API key to your `.env.local` file:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+  Made with ❤️ by Andile
+</div>
