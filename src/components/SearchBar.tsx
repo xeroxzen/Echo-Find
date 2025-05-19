@@ -26,7 +26,7 @@ export default function SearchBar({ onSearch, disabled }: SearchBarProps) {
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search for words or phrases..."
           disabled={disabled}
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 pr-10 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-70"
+          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 pr-10 text-black shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-70"
         />
 
         <button
