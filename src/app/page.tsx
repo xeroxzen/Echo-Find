@@ -6,13 +6,23 @@ import AudioPlayer from "@/components/AudioPlayer";
 import SearchBar from "@/components/SearchBar";
 import { searchTranscription, HighlightResult } from "@/lib/search";
 
+interface TranscriptionWord {
+  word: string;
+  start: number;
+  end: number;
+}
+
+interface TranscriptionSegment {
+  start: number;
+  end: number;
+  text: string;
+  words: TranscriptionWord[];
+}
+
 interface TranscriptionResult {
   text: string;
-  words: Array<{
-    word: string;
-    start: number;
-    end: number;
-  }>;
+  words?: TranscriptionWord[];
+  segments?: TranscriptionSegment[];
 }
 
 export default function Home() {
@@ -48,6 +58,35 @@ export default function Home() {
       }
 
       const data = await response.json();
+      console.log(
+        "API Response:",
+        JSON.stringify(data).substring(0, 500) + "..."
+      );
+
+      // Debug the structure
+      const hasWords = data.words && data.words.length > 0;
+      const hasSegments = data.segments && data.segments.length > 0;
+
+      console.log("Has words array:", hasWords);
+      console.log("Has segments array:", hasSegments);
+
+      if (hasWords) {
+        console.log("Words array length:", data.words.length);
+        console.log("First few words:", JSON.stringify(data.words.slice(0, 3)));
+      } else if (hasSegments) {
+        console.log("Segments array length:", data.segments.length);
+        console.log(
+          "First segment:",
+          JSON.stringify(data.segments[0]).substring(0, 200) + "..."
+        );
+        if (data.segments[0].words) {
+          console.log("Words in first segment:", data.segments[0].words.length);
+        }
+      } else {
+        console.log("No words or segments found!");
+        console.log("Data keys:", Object.keys(data));
+      }
+
       setTranscription(data);
     } catch (err) {
       setError(
@@ -62,8 +101,15 @@ export default function Home() {
   const handleSearch = (query: string) => {
     if (!transcription || !query) return;
 
+    console.log("Searching for:", query);
+    console.log(
+      "Transcription data structure:",
+      transcription ? Object.keys(transcription) : "null"
+    );
+
     setCurrentSearch(query);
     const results = searchTranscription(transcription, query);
+    console.log("Search results:", results.length);
     setHighlights(results);
   };
 
