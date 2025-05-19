@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EchoFind
+
+EchoFind is a lightweight web application that allows users to upload an audio file and search for specific words or phrases within it. The app transcribes the audio, identifies where the searched terms appear, and highlights the exact timestamps, enabling users to jump directly to those moments in the playback.
+
+## Features
+
+- Upload audio files (MP3, WAV, etc.)
+- Transcribe audio using OpenAI's Whisper model
+- Search for words or phrases within the transcription
+- View highlighted matches with timestamps
+- Jump directly to specific moments in the audio
+- Visual waveform display with highlighted regions
+
+## Prerequisites
+
+- Node.js 18+ and npm
+- An OpenAI API key (for transcription service)
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository:
+
+```bash
+git clone git@github.com:xeroxzen/Echo-Find.git
+cd Echo-Find
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Create a `.env.local` file in the root directory with your OpenAI API key:
+
+```
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Upload an audio file by dragging and dropping or clicking the upload area
+2. Wait for the transcription to complete, it takes 5 seconds
+3. Search for specific words or phrases using the search bar
+4. Click on any of the matched results to jump to that part of the audio
+5. View the complete transcription text below the search bar
 
-## Learn More
+## Technologies Used
 
-To learn more about Next.js, take a look at the following resources:
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- OpenAI Whisper API for transcription
+- WaveSurfer.js for audio visualization
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
