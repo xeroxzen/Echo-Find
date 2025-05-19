@@ -42,8 +42,11 @@ export async function POST(request: Request) {
       "prompt",
       "This is an English audio recording. Please transcribe it accurately in English."
     );
+    form.append("timestamp_granularities", "word"); // Explicitly request word-level timestamps
 
-    console.log("Sending transcription request with language: en");
+    console.log(
+      "Sending transcription request with language: en and word-level timestamps"
+    );
 
     // Use fetch directly to call OpenAI API
     const response = await fetch(
@@ -63,6 +66,34 @@ export async function POST(request: Request) {
     }
 
     const transcription = await response.json();
+
+    // Log the structure of the response
+    console.log("Transcription response keys:", Object.keys(transcription));
+
+    if (transcription.segments) {
+      console.log(`Got ${transcription.segments.length} segments`);
+      if (transcription.segments.length > 0) {
+        const firstSegment = transcription.segments[0];
+        console.log("First segment keys:", Object.keys(firstSegment));
+
+        if (firstSegment.words) {
+          console.log(`First segment has ${firstSegment.words.length} words`);
+          if (firstSegment.words.length > 0) {
+            console.log(
+              "Sample word format:",
+              JSON.stringify(firstSegment.words[0])
+            );
+          }
+        } else {
+          console.log("No words array in segments!");
+        }
+      }
+    } else if (transcription.words) {
+      console.log(`Got ${transcription.words.length} words at top level`);
+    } else {
+      console.log("No word-level timing information found in response");
+    }
+
     return NextResponse.json(transcription);
   } catch (error) {
     console.error("Error transcribing audio:", error);
