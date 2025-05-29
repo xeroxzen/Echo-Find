@@ -116,7 +116,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8">
       <header className="mb-8 text-center">
-        <h1 className="mb-2 text-3xl font-bold text-gray-900 md:text-4xl">
+        <h1 className="mb-2 text-3xl font-bold text-white md:text-4xl">
           EchoFind
         </h1>
         <p className="text-lg text-gray-600">
