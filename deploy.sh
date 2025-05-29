@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # EchoFind Deployment Script
-# This script to be run after initial setup
+# This script to be run after initial setup as srvadmin user
 
 set -e
 
@@ -26,9 +26,16 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then
-    print_error "Please run this script as root (sudo)"
+# Check if running as srvadmin (not root)
+if [ "$EUID" -eq 0 ]; then
+    print_error "Please run this script as srvadmin user, not root"
+    print_error "Use: su - srvadmin, then run this script"
+    exit 1
+fi
+
+# Check if user has sudo access
+if ! sudo -n true 2>/dev/null; then
+    print_error "This script requires sudo access. Please ensure srvadmin has sudo privileges."
     exit 1
 fi
 
@@ -48,34 +55,35 @@ if [ -z "$OPENAI_KEY" ]; then
 fi
 
 print_status "Updating system packages..."
-apt update && apt upgrade -y
+sudo apt update && sudo apt upgrade -y
 
 print_status "Installing essential packages..."
-apt install -y curl wget git nginx certbot python3-certbot-nginx ufw htop
+sudo apt install -y curl wget git nginx certbot python3-certbot-nginx ufw htop
 
 print_status "Installing Node.js 20.x..."
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-apt-get install -y nodejs
+sudo apt-get install -y nodejs
 
 print_status "Installing PM2..."
-npm install -g pm2
+sudo npm install -g pm2
 
 print_status "Setting up application directory..."
-mkdir -p /var/www
+sudo mkdir -p /var/www
 cd /var/www
 
 # Check if directory already exists
 if [ -d "echo-find" ]; then
     print_warning "Directory echo-find already exists. Removing..."
-    rm -rf echo-find
+    sudo rm -rf echo-find
 fi
 
 print_status "Cloning repository..."
-git clone https://github.com/xeroxzen/Echo-Find.git echo-find
-cd echo-find
+sudo git clone https://github.com/xeroxzen/Echo-Find.git echo-find
 
-print_status "Setting proper ownership..."
-chown -R root:root /var/www/echo-find
+print_status "Setting proper ownership to srvadmin..."
+sudo chown -R srvadmin:srvadmin /var/www/echo-find
+
+cd echo-find
 
 print_status "Installing dependencies..."
 npm ci --production=false
@@ -112,10 +120,13 @@ EOF
 print_status "Starting application with PM2..."
 pm2 start ecosystem.config.js
 pm2 save
+
+print_status "Setting up PM2 startup..."
+print_warning "You may need to run the startup command as sudo. PM2 will provide instructions."
 pm2 startup
 
 print_status "Configuring Nginx..."
-cat > /etc/nginx/sites-available/echo-find << EOF
+sudo tee /etc/nginx/sites-available/echo-find > /dev/null << EOF
 server {
     listen 80;
     server_name $DOMAIN_NAME www.$DOMAIN_NAME;
@@ -162,21 +173,21 @@ server {
 EOF
 
 print_status "Enabling Nginx site..."
-ln -sf /etc/nginx/sites-available/echo-find /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
+sudo ln -sf /etc/nginx/sites-available/echo-find /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
 
 print_status "Testing Nginx configuration..."
-nginx -t
+sudo nginx -t
 
 print_status "Restarting Nginx..."
-systemctl restart nginx
+sudo systemctl restart nginx
 
 print_status "Configuring firewall..."
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow ssh
-ufw allow 'Nginx Full'
-ufw --force enable
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow ssh
+sudo ufw allow 'Nginx Full'
+sudo ufw --force enable
 
 print_status "Creating update script..."
 cat > /var/www/echo-find/update.sh << 'EOF'
@@ -192,10 +203,10 @@ EOF
 chmod +x /var/www/echo-find/update.sh
 
 print_status "Creating backup script..."
-mkdir -p /root/backups
-cat > /root/backup-echo-find.sh << 'EOF'
+mkdir -p $HOME/backups
+cat > $HOME/backup-echo-find.sh << 'EOF'
 #!/bin/bash
-BACKUP_DIR="/root/backups"
+BACKUP_DIR="$HOME/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 mkdir -p $BACKUP_DIR
@@ -209,10 +220,11 @@ find $BACKUP_DIR -name "echo-find_*.tar.gz" -mtime +7 -delete
 echo "Backup completed: echo-find_$DATE.tar.gz"
 EOF
 
-chmod +x /root/backup-echo-find.sh
+chmod +x $HOME/backup-echo-find.sh
 
 # Set up daily backup cron job
-(crontab -l 2>/dev/null; echo "0 2 * * * /root/backup-echo-find.sh") | crontab -
+print_status "Setting up daily backup cron job..."
+(crontab -l 2>/dev/null; echo "0 2 * * * $HOME/backup-echo-find.sh") | crontab -
 
 print_status "Setting up SSL certificate..."
 read -p "Would you like to install SSL certificate now? (y/n): " INSTALL_SSL
@@ -221,15 +233,15 @@ if [ "$INSTALL_SSL" = "y" ] || [ "$INSTALL_SSL" = "Y" ]; then
     print_warning "Make sure your domain DNS is pointing to this server before continuing..."
     read -p "Press Enter when DNS is configured..."
     
-    certbot --nginx -d $DOMAIN_NAME -d www.$DOMAIN_NAME --non-interactive --agree-tos --email admin@$DOMAIN_NAME
+    sudo certbot --nginx -d $DOMAIN_NAME -d www.$DOMAIN_NAME --non-interactive --agree-tos --email admin@$DOMAIN_NAME
     
     # Test auto-renewal
-    certbot renew --dry-run
+    sudo certbot renew --dry-run
     
     print_status "SSL certificate installed successfully!"
 else
     print_warning "SSL certificate skipped. You can install it later with:"
-    echo "certbot --nginx -d $DOMAIN_NAME -d www.$DOMAIN_NAME"
+    echo "sudo certbot --nginx -d $DOMAIN_NAME -d www.$DOMAIN_NAME"
 fi
 
 print_status "Deployment completed! 🎉"
@@ -238,11 +250,12 @@ echo "============================================"
 echo "🚀 EchoFind Deployment Summary"
 echo "============================================"
 echo "Domain: http://$DOMAIN_NAME"
-echo "Application: Running on PM2"
+echo "Application: Running on PM2 (user: srvadmin)"
 echo "Web Server: Nginx"
 echo "Firewall: UFW enabled"
 echo "Backups: Daily at 2 AM"
 echo "Update script: /var/www/echo-find/update.sh"
+echo "Backup script: $HOME/backup-echo-find.sh"
 echo
 echo "Next steps:"
 echo "1. Configure your DNS to point to this server"
@@ -253,6 +266,8 @@ echo "Useful commands:"
 echo "- Check app status: pm2 status"
 echo "- View app logs: pm2 logs echo-find"
 echo "- Update app: /var/www/echo-find/update.sh"
-echo "- Backup app: /root/backup-echo-find.sh"
+echo "- Backup app: $HOME/backup-echo-find.sh"
+echo "- Check nginx status: sudo systemctl status nginx"
+echo "- View nginx logs: sudo tail -f /var/log/nginx/error.log"
 echo
 print_status "EchoFind application is now live!" 
